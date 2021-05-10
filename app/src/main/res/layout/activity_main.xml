@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+    <Toolbar
+        android:background="@color/colorPrimary"
+        android:title="@string/name"
+        android:titleTextColor="@color/white"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:text="@string/tmp"
+        android:textSize="25sp"
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <com.xuexiang.xui.widget.picker.RulerView
+        android:id="@+id/temp"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:layout_margin="10dp"
+
+        app:rv_firstScale="50"
+        app:rv_minScale="0"
+        app:rv_maxScale="100"
+        app:rv_scaleCount="10"
+        app:rv_unit="℃"
+
+        app:rv_bgColor="#fcfffc"
+        app:rv_smallScaleColor="@color/colorPrimary"
+        app:rv_midScaleColor="@color/colorPrimaryDark"
+        app:rv_largeScaleColor="@color/colorAccent"
+        app:rv_resultNumColor="#50b586"
+        app:rv_scaleNumColor="#666666"
+        app:rv_unitColor="#50b586"
+        app:rv_unitTextSize="10sp" />
+
+    <TextView
+        android:text="@string/water"
+        android:textSize="25sp"
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+    <LinearLayout
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <com.xiaoyou.bluetoothdrink.TempControlView
+            android:id="@+id/temp_control"
+            android:layout_width="260dp"
+            android:layout_height="260dp"
+            android:layout_centerInParent="true" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_marginTop="20dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <Button
+            android:id="@+id/bluetoothOpen"
+            android:text="打开蓝牙"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+        <Button
+            android:layout_marginStart="10dp"
+            android:id="@+id/bluetoothSetting"
+            android:text="蓝牙配对"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+
+</LinearLayout>
