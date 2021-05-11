@@ -5,106 +5,110 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
 import android.content.Intent
+import android.opengl.Visibility
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.os.Message
 import android.util.Log
+import android.view.View
+import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.xuexiang.xui.XUI
 import com.xuexiang.xui.widget.picker.RulerView
+import org.w3c.dom.Text
+import world.shanya.serialport.SerialPort
+import world.shanya.serialport.SerialPortBuilder
 import java.io.IOException
+import java.lang.Exception
 import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
 
-    // 获取蓝牙
-    private val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
     private val REQUEST_ENABLE_BT = 1
-    // 使用管道
-    private var mHandlerThread: Handler? = null
 
-    private lateinit var conn : ConnectThread
+    // 控件
+    private val blueOpen: Button by lazy { findViewById(R.id.bluetoothOpen) }
+    private val blueClose: Button by lazy { findViewById(R.id.bluetoothClose) }
+    // 状态
+    private val drinkStatus: TextView by lazy { findViewById(R.id.status) }
+
+    var serialPort: SerialPort? = null
+
+    private var handle = object: Handler(Looper.getMainLooper()){
+        override fun handleMessage(msg: Message) {
+            when{
+                msg.what == 0 -> {
+                    drinkStatus.text = "已连接"
+                    blueClose.visibility = View.VISIBLE
+                    blueOpen.visibility = View.GONE
+                }
+                msg.what == 1 -> {
+                    drinkStatus.text = "已断开"
+                    blueClose.visibility = View.GONE
+                    blueOpen.visibility = View.VISIBLE
+                }
+            }
+        }
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         XUI.initTheme(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         initView()
-        initBluetooth()
+        // 连接蓝牙和断开蓝牙
+        blueOpen.setOnClickListener{
+            initBluetooth()
+        }
+        blueClose.setOnClickListener{
+            serialPort?.disconnect()
+        }
     }
 
     // 初始化蓝牙
-    // https://developer.android.com/guide/topics/connectivity/bluetooth?hl=zh-cn
+    // https://www.shanya.world/archives/serialport.html
     private fun initBluetooth(){
-        // 打开蓝牙
-        if (bluetoothAdapter?.isEnabled == false) {
-            val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT)
-        }
-        // 查询已经配对的设备
-        val pairedDevices: Set<BluetoothDevice>? = bluetoothAdapter?.bondedDevices
-        pairedDevices?.forEach { device ->
-            // 如果找到这个设备，我们就发起连接
-            if ("HC-06" == device.name){
-                Log.e("xiaoyou", "发起连接")
-                // 发起连接
-                conn = ConnectThread(device)
-                conn.start()
-            }
-        }
-    }
-
-    // 连接蓝牙
-    private inner class ConnectThread(device: BluetoothDevice) : Thread() {
-
-        private val mmSocket: BluetoothSocket? by lazy(LazyThreadSafetyMode.NONE) {
-            // 连接设备
-            // https://stackoverflow.com/questions/18657427/ioexception-read-failed-socket-might-closed-bluetooth-on-android-4-3/41627149
-            device.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
-        }
-
-        override fun run() {
-            // Cancel discovery because it otherwise slows down the connection.
-            bluetoothAdapter?.cancelDiscovery()
-            mmSocket?.use { socket ->
-                // Connect to the remote device through the socket. This call blocks
-                // until it succeeds or throws an exception.
-                socket.connect()
-                Log.e("xiaoyou", "连接成功")
-                // The connection attempt succeeded. Perform work associated with
-
-                mHandlerThread = object : Handler() {
-                    override fun handleMessage(msg: Message) {
-                        super.handleMessage(msg)
-                        Log.e("sub thread", "---------> msg.what = " + msg.what)
-                        val bundle = msg.data
-                        val write = socket.outputStream
-                        write!!.write(bundle.getString("send")?.toByteArray())
-                        write.close()
+        serialPort = SerialPortBuilder
+                //是否开启Debug模式（Debug模式在Logcat打印一些信息，便于调试）
+                .isDebug(true)
+                //是否开启自动连接
+                .autoConnect(true)
+                //是否在未连接设备时自动打开默认的搜索页面
+                .autoOpenDiscoveryActivity(true)
+                //设置接收数据格式（SerialPort.READ_HEX 为十六进制，SerialPort.READ_STRING 为字符串）
+                .setReadDataType(SerialPort.READ_STRING)
+                //设置接收数据格式（SerialPort.SEND_HEX 为十六进制，SerialPort.SEND_STRING 为字符串）
+                .setSendDataType(SerialPort.SEND_STRING)
+                //设置接收 消息监听
+                .setReceivedDataListener {
+                    Log.d("SerialPortDebug", "received: ${it}")
+                }
+                //设置连接状态监听 （status 为连接状态，device 为当前连接设备）
+                .setConnectStatusCallback { status, device ->
+                    if (status) {
+                        handle.sendEmptyMessage(0)
+                        Log.d("SerialPortDebug", "连接: ${device.address}")
+                    } else {
+                        handle.sendEmptyMessage(1)
+                        Log.d("SerialPortDebug", "断开")
                     }
                 }
-
-            }
-        }
-
-        // Closes the client socket and causes the thread to finish.
-        fun cancel() {
-            try {
-                mmSocket.use { socket ->
-                    socket?.close()
-                }
-                mmSocket?.close()
-            } catch (e: IOException) {
-                Log.e("xiaoyou", "Could not close the client socket", e)
-            }
-        }
+                //创建实例（需要传入上下文）
+                .build(this)
+        // 打开搜索页面
+        serialPort?.openDiscoveryActivity()
     }
 
+    // 控件销毁时触发
     override fun onDestroy() {
         super.onDestroy()
-        conn.cancel()
+//        serialPort?.disconnect()
+        Log.e("xiaoyou", "销毁")
     }
 
 
@@ -127,29 +131,19 @@ class MainActivity : AppCompatActivity() {
         waterControl.canRotate = true
         // 出水量修改触发
         waterControl.setOnTempChangeListener { temp ->
-            Toast.makeText(
-                this@MainActivity,
-                "$temp°",
-                Toast.LENGTH_SHORT
-            ).show()
+            // 发送 出水量
+            serialPort?.sendData("w${temp}")
         }
         // 温度修改触发
         tempControl.setOnChooseResultListener(object : RulerView.OnChooseResultListener {
             override fun onEndResult(result: String?) {
                 Log.e("xiaoyou", result ?: "")
-                val msg = Message()
-                val bundle = Bundle()
-                bundle.putString("send", result)
-                msg.what = 1
-                msg.data = bundle
-                mHandlerThread?.sendMessage(msg)
+                // 发送温度
+                serialPort?.sendData("t${result}")
             }
-
             override fun onScrollResult(result: String?) {
 
             }
         })
-
-//        tempControl.setOnClickListener(TempControlView.OnClickListener { temp -> Toast.makeText(this@MainActivity, "$temp°", Toast.LENGTH_SHORT).show() })
     }
 }

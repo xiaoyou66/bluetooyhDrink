@@ -15,6 +15,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
+    <LinearLayout
+        android:layout_marginStart="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:id="@+id/status"
+            android:text="已断开"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+
     <TextView
         android:text="@string/tmp"
         android:textSize="25sp"
@@ -68,13 +79,13 @@
         android:layout_height="wrap_content">
         <Button
             android:id="@+id/bluetoothOpen"
-            android:text="打开蓝牙"
+            android:text="设备连接"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
         <Button
-            android:layout_marginStart="10dp"
-            android:id="@+id/bluetoothSetting"
-            android:text="蓝牙配对"
+            android:visibility="gone"
+            android:id="@+id/bluetoothClose"
+            android:text="断开连接"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
     </LinearLayout>
