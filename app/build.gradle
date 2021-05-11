@@ -45,6 +45,4 @@ dependencies {
 
     // XUI
     implementation 'com.github.xuexiangjys:XUI:1.1.7'
-    // 蓝牙
-    implementation 'com.github.Shanyaliux:SerialPortSample:3.0.0'
 }
