@@ -77,7 +77,7 @@ class MainActivity : AppCompatActivity() {
         var ins :InputStream? = null
         override fun run() {
             try {
-                socket = Socket("192.168.123.119", 5678)
+                socket = Socket("192.168.1.1", 80)
                 ous = socket?.getOutputStream()
                 ins = socket?.getInputStream()
                 val thread = HandlerThread("handler thread")
@@ -107,7 +107,7 @@ class MainActivity : AppCompatActivity() {
         fun sendMessage(message:String){
             val msg = Message()
             val data = Bundle()
-            data.putString("data",message)
+            data.putString("data",message+"e")
             msg.what = 0
             msg.data = data
             handle?.sendMessage(msg)
