@@ -6,6 +6,7 @@ import android.os.*
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -27,6 +28,8 @@ class MainActivity : AppCompatActivity() {
     private val blueClose: Button by lazy { findViewById(R.id.bluetoothClose) }
     // 状态
     private val drinkStatus: TextView by lazy { findViewById(R.id.status) }
+    private val sendHeat: Button by lazy { findViewById(R.id.sendTime) }
+    private val timeNum: EditText by lazy { findViewById(R.id.heatTime) }
 
     // 子线程handle
     private var handle: Handler? = null
@@ -67,6 +70,10 @@ class MainActivity : AppCompatActivity() {
         }
         blueClose.setOnClickListener{
             conn?.cancel()
+        }
+        // 发送加热时间
+        sendHeat.setOnClickListener{
+            conn?.sendMessage("h${timeNum.text}")
         }
     }
 

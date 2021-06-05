@@ -59,6 +59,18 @@ void loop() {
       }
     }
   }
+  // 判断串口是否有数据
+  if(Serial.available()){
+        // 接收数据
+        String data=Serial.readStringUntil('m');
+        // 遍历连接池发送数据
+        for(int i =0; i< MAX_CONNECT; i++){
+          // 发送数据
+          if (WiFi_Client[i] != 0 && WiFi_Client[i]->connected()){
+              WiFi_Client[i]->print(data);
+          }
+        }
+  }
   // 我们遍历连接池来接收数据
   for(int i =0; i< MAX_CONNECT; i++){
      // 先判断连接池里面的连接是否有效
